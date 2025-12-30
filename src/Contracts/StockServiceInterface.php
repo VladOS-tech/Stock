@@ -1,8 +1,11 @@
 <?php
 namespace Warehouse\Contracts;
 
+use Warehouse\Command\StockCommand;
+use Warehouse\Command\StockResult;
+
 interface StockServiceInterface
 {
-    public function hold(string $sku, ?int $price, ?string $orderId): bool;
-    public function confirm(string $orderId): ?string;
+    public function executeHold(StockCommand $command): StockResult;
+    public function executeConfirm(StockCommand $command): StockResult;
 }
