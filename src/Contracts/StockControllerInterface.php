@@ -7,5 +7,7 @@ use Warehouse\Command\StockCommand;
 
 interface StockControllerInterface
 {
-    public function handle(StockCommand $command): void;
+    public function hold(StockCommand $command): void;
+    public function confirm(StockCommand $command): void;
+
 }

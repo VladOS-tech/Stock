@@ -17,17 +17,15 @@ readonly class StockController implements StockControllerInterface
         private ViewInterface         $view
     ) {}
 
-    public function handle(StockCommand $command): void
+    public function hold(StockCommand $command): void
     {
-        try {
-            $result = match ($command->action) {
-                Action::HOLD    => $this->service->executeHold($command),
-                Action::CONFIRM => $this->service->executeConfirm($command),
-                default         => throw new Exception("Неизвестное действие")
-            };
-            $this->view->showResult($result);
-        } catch (Exception $e) {
-            $this->view->showError($e->getMessage());
-        }
+        $result = $this->service->executeHold($command);
+        $this->view->showResult($result);
+    }
+
+    public function confirm(StockCommand $command): void
+    {
+        $result = $this->service->executeConfirm($command);
+        $this->view->showResult($result);
     }
 }
