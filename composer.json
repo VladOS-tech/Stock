@@ -1,0 +1,11 @@
+{
+    "name": "stock/cli-tool",
+    "description": "Stock management CLI",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Warehouse\\": "src/"
+        }
+    },
+    "require": {}
+}
