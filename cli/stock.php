@@ -9,13 +9,15 @@ use Warehouse\Model\StockModel;
 use Warehouse\Service\StockService;
 use Warehouse\View\StockView;
 use Warehouse\Cli\CliParser;
+use Warehouse\Service\StockUseCase;
 
 $config = require __DIR__ . '/../config/database.php';
 $db = new Database($config['dsn']);
 $model      = new StockModel($db->getConnection());
 $service    = new StockService($model);
 $view       = new StockView();
-$controller = new StockController($service, $view, $db);
+$useCase   = new StockUseCase($model, $db);
+$controller = new StockController($useCase, $view);
 
 try {
     $command = CliParser::parse($GLOBALS['argv']);

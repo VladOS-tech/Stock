@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Warehouse\View;
 
+use Warehouse\Command\StockResult;
 use Warehouse\Contracts\ViewInterface;
 
 class StockView implements ViewInterface
@@ -35,5 +36,19 @@ class StockView implements ViewInterface
     public function showError(string $message): void
     {
         echo "Ошибка: $message\n";
+    }
+
+    public function showResult(StockResult $result): void
+    {
+        $this->showAction($result->action, $result->sku, $result->orderId, $result->price);
+
+        if ($result->success) {
+            match ($result->action) {
+                'hold'    => $this->showHoldSuccess($result->sku, $result->orderId),
+                'confirm' => $this->showConfirmSuccess($result->orderId, $result->sku)
+            };
+        } else {
+            $this->showNotFound();
+        }
     }
 }

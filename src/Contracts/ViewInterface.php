@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Warehouse\Contracts;
 
+use Warehouse\Command\StockResult;
+
 interface ViewInterface
 {
     public function showAction(string $action, ?string $sku, ?string $orderId, ?int $price): void;
@@ -11,4 +13,6 @@ interface ViewInterface
     public function showNotFound(): void;
     public function showCompleted(): void;
     public function showError(string $message): void;
+    public function showResult(StockResult $result): void;
+
 }
