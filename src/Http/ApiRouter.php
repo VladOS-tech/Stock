@@ -39,12 +39,16 @@ readonly class ApiRouter
         }
 
         if ($path === '/api/stock/hold' && $method === 'POST') {
+            $idempotencyKey = $_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? uniqid('req_', true);
+            $data['idempotencyKey'] = $idempotencyKey;
             $command = StockCommand::fromArray($data, Action::HOLD);
             $this->controller->hold($command);
             return;
         }
 
         if ($path === '/api/stock/confirm' && $method === 'POST') {
+            $idempotencyKey = $_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? uniqid('req_', true);
+            $data['idempotencyKey'] = $idempotencyKey;
             $command = StockCommand::fromArray($data, Action::CONFIRM);
             $this->controller->confirm($command);
             return;

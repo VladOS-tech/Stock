@@ -3,10 +3,8 @@ declare(strict_types=1);
 
 namespace Warehouse\Service;
 use DomainException;
-use Exception;
 use InvalidArgumentException;
 use RuntimeException;
-use Warehouse\Command\Action;
 use Warehouse\Command\StockCommand;
 use Warehouse\Command\StockResult;
 use Warehouse\Contracts\StockServiceInterface;
@@ -22,6 +20,10 @@ readonly class StockService implements StockServiceInterface
 
     public function executeHold(StockCommand $command): StockResult
     {
+        $cached = $this->stockModel->findByIdempotencyKey($command->idempotencyKey);
+        if ($cached) {
+            return StockResult::fromArray($cached);
+        }
         if (!$command->sku) {
             throw new InvalidArgumentException("Hold требует SKU");
         }
@@ -31,27 +33,35 @@ readonly class StockService implements StockServiceInterface
 
             $stock = $this->stockModel->findAvailableStock($command->sku);
             if (!$stock) {
-                throw new DomainException("Товар {$command->sku} недоступен на складе");
+                throw new DomainException("Товар $command->sku недоступен на складе");
             }
 
             $success = $this->stockModel->holdStock($command->sku, $command->price, $orderId);
 
             if (!$success) {
-                throw new RuntimeException("Не удалось зарезервировать товар {$command->sku}");
+                throw new RuntimeException("Не удалось зарезервировать товар $command->sku");
             }
 
-            return new StockResult(
+            $result = new StockResult(
                 success: true,
                 action: 'hold',
                 sku: $command->sku,
                 orderId: $orderId,
                 price: $command->price
             );
+
+            $this->stockModel->saveIdempotencyResult($command->idempotencyKey, $result);
+            return $result;
         });
     }
 
     public function executeConfirm(StockCommand $command): StockResult
     {
+        $cached = $this->stockModel->findByIdempotencyKey($command->idempotencyKey);
+        if ($cached) {
+            return StockResult::fromArray($cached);
+        }
+
         if (!$command->orderId) {
             throw new InvalidArgumentException("Confirm требует orderId");
         }
@@ -60,16 +70,20 @@ readonly class StockService implements StockServiceInterface
             $sku = $this->stockModel->confirmStock($command->orderId);
 
             if ($sku === null) {
-                throw new DomainException("Заказ {$command->orderId} не найден или уже подтверждён");
+                throw new DomainException("Заказ $command->orderId не найден или уже подтверждён");
             }
 
-            return new StockResult(
+            $result = new StockResult(
                 success: true,
                 action: 'confirm',
                 sku: $sku,
                 orderId: $command->orderId,
                 price: null
             );
+
+            $this->stockModel->saveIdempotencyResult($command->idempotencyKey, $result);
+
+            return $result;
         });
     }
 }

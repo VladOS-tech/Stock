@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Warehouse\Model;
 
+use Warehouse\Command\StockResult;
 use Warehouse\Contracts\StockModelInterface;
 use PDO;
 
@@ -76,4 +77,33 @@ readonly class StockModel implements StockModelInterface
         return $row ?: null;
     }
 
+    public function findByIdempotencyKey(string $key): ?array
+    {
+        $stmt = $this->pdo->prepare("
+        SELECT action, sku, order_id, price
+        FROM idempotency_results
+        WHERE idempotency_key = :key AND expires_at > NOW()
+        LIMIT 1
+    ");
+        $stmt->execute(['key' => $key]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    }
+
+    public function saveIdempotencyResult(string $key, StockResult $result): void
+    {
+        $stmt = $this->pdo->prepare("
+        INSERT INTO idempotency_results (idempotency_key, action, sku, order_id, price)
+        VALUES (:key, :action, :sku, :order_id, :price)
+        ON CONFLICT (idempotency_key) DO NOTHING
+    ");
+        $stmt->execute([
+            'key'      => $key,
+            'action'   => $result->action,
+            'sku'      => $result->sku,
+            'order_id' => $result->orderId,
+            'price'    => $result->price,
+        ]);
+    }
 }
