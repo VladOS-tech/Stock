@@ -6,12 +6,12 @@ namespace Warehouse\Router;
 use Exception;
 use Warehouse\Cli\CliParser;
 use Warehouse\Command\Action;
-use Warehouse\Controller\StockController;
+use Warehouse\Contracts\StockControllerInterface;
 
 readonly class Router
 {
     public function __construct(
-        private StockController $controller
+        private StockControllerInterface $controller
     ) {}
 
     public function route(array $argv): void

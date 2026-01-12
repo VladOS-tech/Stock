@@ -5,12 +5,12 @@ namespace Warehouse\Http;
 
 use Warehouse\Command\Action;
 use Warehouse\Command\StockCommand;
-use Warehouse\Controller\StockController;
+use Warehouse\Contracts\StockControllerInterface;
 
 readonly class ApiRouter
 {
     public function __construct(
-        private StockController $controller
+        private StockControllerInterface $controller
     ) {}
 
     public function route(array $server, string $rawBody): void
