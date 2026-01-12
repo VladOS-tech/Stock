@@ -10,9 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
             responseEl.textContent = 'Loading...';
             responseEl.className = '';
 
+            const idempotencyKey = crypto.randomUUID();
+
             const res = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
                 body: JSON.stringify(data),
             });
 
