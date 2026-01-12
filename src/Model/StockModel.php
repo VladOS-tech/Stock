@@ -45,8 +45,9 @@ readonly class StockModel implements StockModelInterface
                 'sku' => $sku
             ]);
         }
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $stmt->fetch() !== false;
+        return $result !== false;
     }
 
     public function confirmStock(string $orderId): ?string
@@ -59,6 +60,20 @@ readonly class StockModel implements StockModelInterface
         ");
 
         $stmt->execute(['state' => "Hold/$orderId"]);
-        return $stmt->fetchColumn();
+        $sku = $stmt->fetchColumn();
+        return $sku !== false ? (string)$sku : null;
     }
+
+    public function findAvailableStock(string $sku): ?array
+    {
+        $stmt = $this->pdo->prepare("
+        SELECT ctid FROM stock 
+        WHERE sku = :sku AND state = 'Stock' 
+        LIMIT 1
+    ");
+        $stmt->execute(['sku' => $sku]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
 }

@@ -7,5 +7,7 @@
             "Warehouse\\": "src/"
         }
     },
-    "require": {}
+    "require": {
+      "ext-pdo": "*"
+    }
 }

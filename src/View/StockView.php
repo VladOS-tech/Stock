@@ -8,7 +8,7 @@ use Warehouse\Contracts\ViewInterface;
 
 class StockView implements ViewInterface
 {
-    public function showAction(string $action, ?string $sku, ?string $orderId, ?int $price): void
+    public function showAction(string $action, ?string $sku, ?string $orderId, ?float $price): void
     {
         echo "Действие: $action, SKU: $sku, ORDER: " . ($orderId ?? 'N/A') . ", Price: " . ($price ?? 'N/A') . "\n";
     }
