@@ -13,6 +13,9 @@ class Database implements TransactionManagerInterface
     {
         $this->pdo = new PDO($dsn);
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        $this->pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     }
 
     public function getConnection(): PDO

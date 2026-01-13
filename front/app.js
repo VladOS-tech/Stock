@@ -1,28 +1,38 @@
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'http://localhost:8000';
 
 document.addEventListener('DOMContentLoaded', () => {
     const holdForm = document.getElementById('hold-form');
     const confirmForm = document.getElementById('confirm-form');
     const responseEl = document.getElementById('response');
 
-    async function callApi(url, data) {
+    async function callApi(endpoint, data) {
         try {
             responseEl.textContent = 'Loading...';
             responseEl.className = '';
 
             const idempotencyKey = crypto.randomUUID();
+            console.log('Key:', idempotencyKey);
+
+            const url = `${API_URL}${endpoint}`;
+            console.log('URL:', url);
 
             const res = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': idempotencyKey
+                },
                 body: JSON.stringify(data),
             });
+
+            console.log('Status:', res.status);
 
             const json = await res.json();
             responseEl.textContent = JSON.stringify(json, null, 2);
             responseEl.className = json.success ? 'success' : 'error';
         } catch (error) {
-            responseEl.textContent = JSON.stringify({ error: error.message }, null, 2);
+            console.error('Fetch error:', error);
+            responseEl.textContent = `Error: ${error.message}`;
             responseEl.className = 'error';
         }
     }
@@ -31,12 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const formData = new FormData(holdForm);
 
-        const sku = formData.get('sku');
-        const priceStr = formData.get('price');
-
-        await callApi(`${API_URL}/stock/hold`, {
-            sku: sku ? String(sku) : null,
-            price: priceStr ? parseFloat(String(priceStr)) : null,
+        await callApi('/api/stock/hold', {
+            sku: formData.get('sku') || null,
+            price: formData.get('price') ? parseFloat(formData.get('price')) : null,
         });
     });
 
@@ -44,10 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const formData = new FormData(confirmForm);
 
-        const orderId = formData.get('orderId');
-
-        await callApi(`${API_URL}/stock/confirm`, {
-            orderId: orderId ? String(orderId) : null,
+        await callApi('/api/stock/confirm', {
+            orderId: formData.get('orderId') || null,
         });
     });
 });

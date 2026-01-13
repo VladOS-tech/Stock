@@ -4,14 +4,17 @@ declare(strict_types=1);
 namespace Warehouse;
 
 use InvalidArgumentException;
+use Warehouse\Contracts\MiddlewareInterface;
 use Warehouse\Contracts\StockControllerInterface;
-use Warehouse\Contracts\StockModelInterface;
+use Warehouse\Contracts\StockRepositoryInterface;
 use Warehouse\Contracts\StockServiceInterface;
 use Warehouse\Contracts\TransactionManagerInterface;
 use Warehouse\Contracts\ViewInterface;
 use Warehouse\Controller\StockController;
 use Warehouse\Http\ApiRouter;
-use Warehouse\Model\StockModel;
+use Warehouse\Middleware\IdempotencyMiddleware;
+use Warehouse\Repository\IdempotencyRepository;
+use Warehouse\Repository\StockRepository;
 use Warehouse\Service\StockService;
 use Warehouse\View\JsonView;
 
@@ -62,19 +65,26 @@ class Container
         $instance = match ($abstract) {
             Database::class => new Database(self::param('database.dsn')),
             JsonView::class => new JsonView(),
-            StockModel::class, StockModelInterface::class => new StockModel(
+            StockRepository::class, StockRepositoryInterface::class => new StockRepository(
                 self::get(Database::class)->getConnection()
             ),
             StockService::class, StockServiceInterface::class, TransactionManagerInterface::class => new StockService(
-                self::get(StockModelInterface::class),
+                self::get(StockRepositoryInterface::class),
                 self::get(Database::class)
+            ),
+            IdempotencyRepository::class => new IdempotencyRepository(
+                self::get(Database::class)->getConnection()
+            ),
+            IdempotencyMiddleware::class, MiddlewareInterface::class => new IdempotencyMiddleware(
+                self::get(IdempotencyRepository::class)
             ),
             StockController::class, StockControllerInterface::class => new StockController(
                 self::get(StockServiceInterface::class),
                 self::get(ViewInterface::class)
             ),
             ApiRouter::class => new ApiRouter(
-                self::get(StockControllerInterface::class)
+                self::get(StockControllerInterface::class),
+                self::get(MiddlewareInterface::class)
             ),
             ViewInterface::class => self::get(JsonView::class),
 

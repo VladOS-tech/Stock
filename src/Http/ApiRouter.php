@@ -5,26 +5,28 @@ namespace Warehouse\Http;
 
 use Warehouse\Command\Action;
 use Warehouse\Command\StockCommand;
+use Warehouse\Contracts\MiddlewareInterface;
 use Warehouse\Contracts\StockControllerInterface;
 
 readonly class ApiRouter
 {
     public function __construct(
-        private StockControllerInterface $controller
+        private StockControllerInterface $controller,
+        private MiddlewareInterface $middleware
     ) {}
 
     public function route(array $server, string $rawBody): void
     {
         header('Access-Control-Allow-Origin: http://localhost:3000');
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type');
+        header('Access-Control-Allow-Headers: Content-Type, Idempotency-Key');
 
         if (($server['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
             http_response_code(200);
             return;
         }
         $method = $server['REQUEST_METHOD'] ?? 'GET';
-        $path   = parse_url($server['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        $path = parse_url($server['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
         header('Content-Type: application/json');
 
@@ -42,7 +44,8 @@ readonly class ApiRouter
             $idempotencyKey = $_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? uniqid('req_', true);
             $data['idempotencyKey'] = $idempotencyKey;
             $command = StockCommand::fromArray($data, Action::HOLD);
-            $this->controller->hold($command);
+            $safeHold = $this->middleware->wrap([$this->controller, 'hold']);
+            $safeHold($command);
             return;
         }
 
@@ -50,7 +53,8 @@ readonly class ApiRouter
             $idempotencyKey = $_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? uniqid('req_', true);
             $data['idempotencyKey'] = $idempotencyKey;
             $command = StockCommand::fromArray($data, Action::CONFIRM);
-            $this->controller->confirm($command);
+            $safeConfirm = $this->middleware->wrap([$this->controller, 'confirm']);
+            $safeConfirm($command);
             return;
         }
 

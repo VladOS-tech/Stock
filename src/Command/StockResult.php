@@ -7,7 +7,7 @@ class StockResult
 {
     public function __construct(
         public bool $success,
-        public string $action,
+        public string $action = 'hold',
         public ?string $sku,
         public ?string $orderId,
         public ?float $price = null,
@@ -24,4 +24,14 @@ class StockResult
         );
     }
 
+    public function toArray(): array
+    {
+        return [
+            'success' => $this->success,
+            'action' => $this->action,
+            'sku' => $this->sku,
+            'orderId' => $this->orderId,
+            'price' => $this->price
+        ];
+    }
 }
